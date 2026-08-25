@@ -1,0 +1,31 @@
+# build artifacts — rebuild with: g++ -O2 -o quad2d quad2d.cpp
+quad2d
+clifford
+clifford.ppm
+
+# python
+__pycache__/
+*.pyc
+
+# generated artifacts: keep the catalog (codes) and the curated examples,
+# ignore the big binary grids and the superseded pre-wallpaper batch
+output/old/
+output/images/favourites/   # local scratch: personal picks, not part of the repo
+output/*.raw
+output/raw/
+output/images/
+output/txt/
+output/*.png
+
+# dev scratch
+colornotes.md
+description.md
+attractor_final.png
+candidates_best.png
+final_check.png
+new_randoms.png
+rand_compare.png
+stress4.png
+style_comparison.png
+*.err
+*.log
