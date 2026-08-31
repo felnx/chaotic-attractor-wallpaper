@@ -116,7 +116,7 @@ Two stages, split so the expensive part stays in C:
 
 ```
  ┌────────────┐    orbit + pass-counts    ┌──────────────┐   tone map,   ┌─────────┐
- │  quad2d    │ ──── float density grid ─▶ │  attractor.py│ ── color ───▶ │ wallpaper│
+ │  quad2d    │ ──── float density grid ─▶│ attractor.py │ ── color ───▶ │wallpaper│
  │  (C++)     │        (<CODE>.raw)       │  (Python)    │               │  .png   │
  └────────────┘                           └──────────────┘               └─────────┘
 ```
