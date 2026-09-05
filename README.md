@@ -1,7 +1,6 @@
 # Chaotic Attractor Wallpaper
 
-Generate 2-D chaotic attractors and render them as wallpaper: crisp
-line-art on a clean background. The parameter set is saved as a short
+Generate 2-D chaotic attractors and render them as wallpaper. The parameter set is saved as a short
 copy-pasteable **code** you can re-render at any time in any color or
 size.
 
@@ -49,8 +48,7 @@ times.
   filaments and the rest stays background.
 * **The smoky halo is the blur.** A Gaussian blur on the density before
   the tone curve spreads each filament into a soft glow.
-* **Color is a style option, not part of the attractor.** The code fixes
-  the math, never the colors: I selected the brown-on-beige pair
+* **Color is a style option** I selected the brown-on-beige pair
   (`--fg #553E0B --bg #9E8960`) purely for example purposes. Color
   picking is available (`--fg`/`--bg`, any gray or hex), so any of the
   three can be re-rendered in any color from its code alone.
