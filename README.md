@@ -33,6 +33,34 @@ Examples (each is re-renderable via the code in its filename — e.g.
 | ![a](examples/351WDKN4AR0T1PPYD2A89H96G5GF2PMSR900F9A.png) | ![b](examples/24VME8BDYD7HR72FXY7QWXW3TA1XST5ZRDS495S.png) | ![c](examples/015NFG9H3HDYAT2FFHV2MGG9NCFE4ZVQYBCH59M.png) |
 | `351WDKN4AR0T1PPYD2A89H96G5GF2PMSR900F9A` | `24VME8BDYD7HR72FXY7QWXW3TA1XST5ZRDS495S` | `015NFG9H3HDYAT2FFHV2MGG9NCFE4ZVQYBCH59M` |
 
+### Why the examples look the way they do
+
+All three are **polynomial-family** attractors (the default `--family`),
+i.e. one 12-coefficient quadratic map (the two equations at the top)
+iterated from a single starting point for ~20M steps:
+
+* **A different shape per image.** Each code is a different random set of
+  12 coefficients, and chaotic maps are hyper-sensitive to their
+  parameters: a tiny change in one coefficient produces a completely
+  different pattern. Same family, same recipe, entirely different
+  pictures — that is the chaos doing its job.
+* **The lines are pass-counts, not edges.** `quad2d` counts how many times
+  the orbit visits each pixel of a fine grid. The orbit is a 1-D curve
+  wandering through 2-D space, so most pixels are never visited while a
+  few receive thousands of passes. The tone curve maps those pass-counts
+  to gray levels, so densely visited regions become thin dark filaments
+  and empty regions stay the plain background — which is why the images
+  read as line art rather than solid shapes.
+* **The smoky halo is the blur.** Before the tone curve, the density grid
+  is Gaussian-blurred, so each filament spreads a soft glow into the
+  surrounding empty space — the faint haze around the crisp cores.
+* **The color is a style option, not part of the attractor.** The code
+  fixes the mathematics only, never the colors: the examples above were
+  re-rendered with the same easy-on-the-eyes brown-on-beige pair
+  (`--fg #553E0B --bg #9E8960`; the default is black on white). Any of
+  the three can be re-rendered in any gray or hex color pair from its
+  code alone.
+
 ## Requirements
 
 * **g++** — builds the C integrator (fast orbit integration + density grid)
@@ -115,10 +143,10 @@ brown on beige, `--fg #553E0B --bg #9E8960`.
 Two stages, split so the expensive part stays in C:
 
 ```
- ┌────────────┐    orbit + pass-counts    ┌──────────────┐   tone map,   ┌─────────┐
- │  quad2d    │ ──── float density grid ─▶ │  attractor.py│ ── color ───▶ │ wallpaper│
- │  (C++)     │        (<CODE>.raw)       │  (Python)    │               │  .png   │
- └────────────┘                           └──────────────┘               └─────────┘
+ ┌────────────┐    orbit + pass-counts    ┌──────────────┐   tone map,   ┌────────────┐
+ │   quad2d   │ ── float density grid ──► │ attractor.py │ ── color ───► │ wallpaper  │
+ │   (C++)    │       (<CODE>.raw)        │   (Python)   │               │    .png    │
+ └────────────┘                           └──────────────┘               └────────────┘
 ```
 
 1. **quad2d** integrates the orbit (default 20M steps) and accumulates a

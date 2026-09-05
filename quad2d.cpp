@@ -50,6 +50,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cctype>
 #include <cmath>
 #include <cstring>
 #include <vector>
@@ -120,7 +121,7 @@ static void integrate(const P &p, int W, int H, long long iters, std::vector<flo
             continue;
         }
         if (i < 10000) continue; // discard transient
-        if (x < tmnx) tmnx = x;   // true extent over ALL in-box-or-not points
+        if (x < tmnx) tmnx = x;   // true extent over all NON-transient points
         if (x > tmxx) tmxx = x;
         if (y < tmny) tmny = y;
         if (y > tmxy) tmxy = y;

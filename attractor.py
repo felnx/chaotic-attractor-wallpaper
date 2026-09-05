@@ -99,7 +99,6 @@ import re
 import struct
 import subprocess
 import sys
-import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 QUAD2D = os.path.join(HERE, "quad2d")
@@ -479,7 +478,8 @@ def gauss_blur(d, sigma, np):
 
 
 def load_raw(path, np):
-    data = open(path, "rb").read()
+    with open(path, "rb") as f:
+        data = f.read()
     W, H = struct.unpack("<ii", data[:8])
     return np.frombuffer(data, dtype="<f4", count=W * H,
                          offset=8).copy().reshape(H, W)
@@ -530,7 +530,7 @@ def render(code, outdir=DEFAULT_OUTDIR, out=None, overrides=None,
         family = infer_family(code, bits)
     n = FAMILIES[family]["n"]
     ps = decode(code, family, bits)
-    a, b = ps[:n // 2], ps[n // 2]
+    a, b = ps[:n // 2], ps[n // 2:]
 
     cfg_path = os.path.join(outdir, code + ".cfg")
     for d in (os.path.join(outdir, DIR_TXT), os.path.join(outdir, DIR_RAW),
@@ -549,18 +549,15 @@ def render(code, outdir=DEFAULT_OUTDIR, out=None, overrides=None,
             if "exact" in cfg:
                 try:
                     exact = [float(v) for v in cfg["exact"].split()]
-                    if len(exact) == n:
-                        a, b = exact[:n // 2], exact[n // 2:]
                 except ValueError:
-                    pass
+                    exact = None
+                if exact is not None and len(exact) == n:
+                    a, b = exact[:n // 2], exact[n // 2:]
             try:
-                info = tuple(map(float, cfg["bounds"].split()))
+                info = (tuple(map(float, cfg["bounds"].split()))
+                        + tuple(map(float, cfg["start"].split())))
             except (KeyError, ValueError):
                 info = None
-            try:
-                info = info + tuple(map(float, cfg["start"].split()))
-            except (KeyError, ValueError):
-                pass
             for k in ("sigma", "pct", "gamma"):
                 try:
                     style[k] = float(cfg[k])
@@ -629,7 +626,8 @@ def render(code, outdir=DEFAULT_OUTDIR, out=None, overrides=None,
         if not os.path.exists(raw):
             raise RenderError(f"quad2d wrote no grid for {code}"
                               + (" (orbit diverged)" if diverged else ""))
-        data = open(raw, "rb").read()
+        with open(raw, "rb") as f:
+            data = f.read()
         W, H = struct.unpack("<ii", data[:8])
         if len(data) != 8 + 4 * W * H:
             raise RenderError(f"corrupt grid file for {code}")
@@ -661,14 +659,16 @@ def render(code, outdir=DEFAULT_OUTDIR, out=None, overrides=None,
             print("  warning: orbit still exceeds the box; image may clip")
         if kept > 0 and os.path.exists(cfg_path):
             # persist the good bounds so future re-renders skip the retry
-            lines = open(cfg_path).read().splitlines()
+            with open(cfg_path) as fh:
+                lines = fh.read().splitlines()
             new = []
             for ln in lines:
                 if ln.startswith("bounds"):
                     ln = ("bounds  %.17g %.17g %.17g %.17g"
                           % (xmn, ymn, xmx, ymx))
                 new.append(ln)
-            open(cfg_path, "w").write("\n".join(new) + "\n")
+            with open(cfg_path, "w") as fh:
+                fh.write("\n".join(new) + "\n")
     if kept == 0:
         raise RenderError(
             f"no points in the box for {code}: "
@@ -706,12 +706,12 @@ def render(code, outdir=DEFAULT_OUTDIR, out=None, overrides=None,
     else:
         raise RenderError(f"bad --fit {fit!r}: use 'contain' or 'cover'")
     if verbose and (W, H) != (bw, bh):
-        mode = f"contain margin={m:.3f}" if fit == "contain" else "cover"
-        print(f"  wallpaper {W}x{H}: attractor {bw}x{bh} placed "
-              f"{mode} -> {canvas.size[0]}x{canvas.size[1]} area"
-              if fit == "contain" else
-              f"  wallpaper {W}x{H}: attractor {bw}x{bh} cropped "
-              f"cover -> {canvas.size[0]}x{canvas.size[1]}")
+        if fit == "contain":
+            print(f"  wallpaper {W}x{H}: attractor {bw}x{bh} placed "
+                  f"contain margin={m:.3f} -> {canvas.size[0]}x{canvas.size[1]} area")
+        else:
+            print(f"  wallpaper {W}x{H}: attractor {bw}x{bh} cropped "
+                  f"cover -> {canvas.size[0]}x{canvas.size[1]}")
     img = canvas
 
     flat = np.asarray(img).reshape(-1, 3)
@@ -805,12 +805,11 @@ def main(argv=None):
     ap.add_argument("--lyap-min", type=float, default=1e-4,
                     help="min Lyapunov exponent to count as chaotic")
     ap.add_argument("--min-coverage", type=float, default=0.005,
-                    help="min fraction of canvas cells the orbit must visit "
-                         "(default 0.005 = 0.5%%, normalized to the 900-px "
-                         "reference grid: at other --res values the default "
-                         "is auto-scaled by (900/res)^2 so sparse-attractor "
-                         "rejection doesn't change with resolution; an "
-                         "explicit value is used as-is)")
+                    help="min fraction of grid cells the orbit must visit. "
+                         "Default 0.005 is expressed on the 900-px reference "
+                         "grid and auto-scaled by (900/res)^2, so the same "
+                         "rejection rate holds at any --res; an explicit "
+                         "value is used as-is")
     ap.add_argument("--outdir", default=DEFAULT_OUTDIR, help="output dir")
     ap.add_argument("--out", default=None,
                     help="explicit PNG path (single render / code list only)")
@@ -868,7 +867,6 @@ def main(argv=None):
                                if v is not None})
     made = 0
     attempts = 0
-    stamp = int(time.time())
     while made < args.count:
         attempts += 1
         a, b = random_coeffs(fam, rng)

@@ -12,7 +12,6 @@ Usage (any python with PIL):
     long_side : pixels of the canvas's longer side (default 1600)
     gray      : ink gray value 0..255 (default 30; lower = darker)
 """
-import struct  # noqa: F401  (kept for symmetry with other scripts)
 import sys
 from PIL import Image, ImageDraw
 

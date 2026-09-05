@@ -45,17 +45,18 @@ def load_raw(path):
     return d
 
 
-def render(n, sigma, K, gamma=0.9, floor=85):
-    d = load_raw(f"output/{n}.raw")
+def render(n, d, sigma, K, gamma=0.9, floor=85):
+    """Tone-map a density grid d (HxW float) to output/<n>_hd.png."""
     db = gauss_blur(d, sigma)
     t = np.where(db > 0, 1.0 - np.exp(-db / K), 0.0)
     g = 255.0 * (1.0 - t ** gamma)
     np.clip(g, floor, 255, out=g)
     px = g.round().astype(np.uint8)
-    Image.fromarray(px, mode="L").save(f"output/{n}_hd.png")
+    out = f"output/{n}_hd.png"
+    Image.fromarray(px, mode="L").save(out)
     flat = px.ravel()
     ink = flat[flat < 250]
-    return px.shape, int(np.median(ink)), round(100 * len(ink) / len(flat), 1), len(np.unique(flat))
+    return out, px.shape, int(np.median(ink)), round(100 * len(ink) / len(flat), 1), len(np.unique(flat))
 
 
 def main():
@@ -68,8 +69,9 @@ def main():
         # auto K: a density that is ~p97 of the nonzero cells maps to a clear
         # mid-dark stroke; keeps faint parts visible but not the whole canvas gray
         K = float(np.percentile(pos, 97))
-        shape, med, inkpct, levels = render(n, sigma, K)
-        print(f"{n}: {shape[1]}x{shape[0]}  K={K:.0f}  median={med}  ink%={inkpct}  levels={levels}")
+        out, shape, med, inkpct, levels = render(n, d, sigma, K)
+        print(f"{n}: {shape[1]}x{shape[0]}  K={K:.0f}  median={med}  "
+              f"ink%={inkpct}  levels={levels}  -> {out}")
 
 
 if __name__ == "__main__":

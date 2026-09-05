@@ -40,6 +40,7 @@ def main():
     model = "local-model"
     api_key = os.environ.get("LLM_API_KEY", "")
     q = None
+    max_tokens = 4000
     imgs = []
     i = 0
     while i < len(args):
@@ -53,7 +54,7 @@ def main():
         if a == "-q":
             q = args[i + 1]; i += 2; continue
         if a == "-t":
-            max_tok = int(args[i + 1]); i += 2; continue
+            max_tokens = int(args[i + 1]); i += 2; continue
         imgs.append(a)
         i += 1
     if q is None:
@@ -61,14 +62,16 @@ def main():
             print("usage: ask_vision.py [question] imgs...  (-q for question)"); sys.exit(2)
         q, imgs = imgs[0], imgs[1:]
     try:
-        print(call(f"http://127.0.0.1:{port}", model, q, imgs, api_key=api_key))
+        print(call(f"http://127.0.0.1:{port}", model, q, imgs,
+                   max_tokens=max_tokens, api_key=api_key))
     except Exception as e:
         # fall back: model name may differ; fetch /v1/models
         print(f"direct call failed ({e}); listing models...", file=sys.stderr)
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/v1/models", timeout=30) as r:
             models = json.load(r)
         name = models["data"][0]["id"]
-        print(call(f"http://127.0.0.1:{port}", name, q, imgs, api_key=api_key))
+        print(call(f"http://127.0.0.1:{port}", name, q, imgs,
+                   max_tokens=max_tokens, api_key=api_key))
 
 if __name__ == "__main__":
     main()

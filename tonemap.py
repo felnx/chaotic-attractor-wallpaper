@@ -16,7 +16,6 @@ smooth smoky gradient.
 Winning recipe for candidate 684 (reference: median ~125, ink ~40%, no
 harsh black): sigma=10, K=300, gamma=0.9, floor=85.
 """
-import math
 import sys
 import struct
 
